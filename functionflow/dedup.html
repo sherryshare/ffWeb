@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Dedup in PARSEC</TITLE>
+<META NAME="description" CONTENT="Dedup in PARSEC">
+<META NAME="keywords" CONTENT="Function Flow">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+
+<LINK REL="next" HREF="lexi.html">
+<LINK REL="up" HREF="cases.html">
+</HEAD>
+
+<BODY class=MsoNormalTable border=0 cellpadding=0 style='mso-cellspacing:1.5pt;background:#CCECFF;mso-padding-alt:0cm 5.4pt 0cm 5.4pt'>
+<BR><BR>
+
+<H1><A NAME="SECTION00041000000000000000">
+Dedup in PARSEC</A>
+</H1><HR>
+<P>
+<TT>Dedup</TT>, from PARSEC, is a routine that compresses data with a "next-generation" method called deduplication, now much used for backup storage and network transmission of large amounts of data, with a pipelined architecture as follows:
+
+<UL>
+<LI>break the input stream into small chunks;
+</LI>
+<LI>for each chunk, compute a hash value that uniquely identifies its content;
+</LI>
+<LI>insert it into a global database of chunks indexed by the hash value;
+</LI>
+<LI><TT>if</TT> chunk has not been encountered before <TT>then</TT>
+      compress it with Ziv-Lempel 
+   <TT>else</TT> 
+      retrieve its compressed value from the hash
+</LI>
+<LI>write the compressed chunk out to the output stream.
+</LI>
+</UL>
+</P>
+<P>
+This is a typical example of a pipeline that must be set up dynamically because a selection between tasks is done at run-time. 
+The traditional approach is to use a blocking queue to save the result of each stage but the problem with this is that two successive stages cannot be combined into one if the second depends on a run-time selection. 
+Instead, the branches of the selection must be merge into one, giving a coarse-grained parallelism and possibly a severely inefficient load imbalance.
+<BR>Implemented in functional wait, however, the code is as follows.
+</P>
+
+&nbsp;&nbsp;vector&lt;<B><FONT COLOR=#0000FF>para</FONT></B>&gt; c(frag_counts);<BR>
+&nbsp;&nbsp;for(int i=0; i < frag_counts; i++)<BR>
+&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B><FONT COLOR=#0000FF>para</FONT></B> a, b;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;Hash hash = a GetHashValue(frags[i]);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;if(!IsExisted(hash))<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b<B>&lt;a&gt;</B> FindDataViaHash(hash);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;}<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;else<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b<B>&lt;a&gt;</B> CompressData(frags[i]);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;}<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;if(i == 0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c[0]<B>&lt;b&gt;</B> WriteBack(cmpddata[i]);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;else<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c[i]<B>&lt;b && c[i-1]&gt;</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WriteBack(cmpddata[i]);<BR>
+&nbsp;&nbsp;}
+<P>Even the code is fine grained, Optimising opportunities are still reported by our analyzer. The SDG is shown in Fig.&nbsp;<A HREF="#fig-dedup">3</A>. 
+Our analyzer reports that <TT>IsExisted</TT> may cause decreased parallelism and possible task fusion.
+Although <TT> Function Flow</TT> promise that <TT>IsExisted(hash)</TT> can be evaluated correctly, the evaluation is necessary because it is part of control flow.
+This makes the code before and after <TT>IsExisted</TT> sequentially executed. 
+Noticing that <TT>a</TT>, <TT>b</TT> and <TT>IsExisted</TT> are tightly coupled, we can apply task fusion here to combine them into one task which rebuild parallelism.
+Here is our optimised code.</P>
+
+
+<DIV ALIGN="CENTER"><A NAME="fig-dedup"></A><A NAME="484"></A>
+<TABLE><TR>
+<TD><TABLE  WIDTH="50%" >
+void loop_wrapper(int index)<BR>
+{<BR>
+&nbsp;&nbsp;Hash hash = GetHashValue(index);<BR>
+&nbsp;&nbsp;if(!IsExisted(hash))<BR>
+&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;FindDataViaHash(hash);<BR>
+&nbsp;&nbsp;}<BR>
+&nbsp;&nbsp;else{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;CompressData(frags[i]);<BR>
+&nbsp;&nbsp;}<BR>
+}<BR>
+vector&lt;<B><FONT COLOR=#0000FF>para</FONT></B>&gt; c(frag_counts);<BR>
+for(int i = 0; i < frag_counts; i++)<BR>
+{<BR>
+&nbsp;&nbsp;<B><FONT COLOR=#0000FF>para</FONT></B> s;<BR>
+&nbsp;&nbsp;s loop_wrapper(i);<BR>
+&nbsp;&nbsp;if(i == 0)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;c[0]<B>&lt;s&gt;</B> WriteBack(cmpddata[i]);<BR>
+&nbsp;&nbsp;else<BR>
+&nbsp;&nbsp;c[i]<B>&lt;s && c[i-1]&gt;</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WriteBack(cmpddata[i]);<BR>
+}<BR>
+</TABLE></TD>
+<TD><TABLE  WIDTH="50%" ALIGN="CENTER" >
+<IMG ALIGN="CENTER" WIDTH=400
+ BORDER="0" SRC="pic/dedup.png">
+ <CAPTION STYLE="white-space:nowrap;display:inline-block"><STRONG>Figure 3:</STRONG>
+SDG of <TT>Dedup</TT>.</CAPTION>
+</TABLE></TD>
+</TR></TABLE>
+</DIV>
+<P>Dynamic pipeline is common in many fields, such as X264 in video processing, data mining, etc. 
+In this kind of pipeline, dependences between stages is decided by runtime values and this makes dynamic pipeline cannot be programmed statically. 
+So bug detection and optimising is more difficult than static pipeline.</P>
+
+<HR>
+<!--Navigation Panel-->
+<B> Next:</B> <A NAME="tex2html69"
+  HREF="lexi.html">C Lexical Analysis</A>
+<B> Up:</B> <A NAME="tex2html67"
+  HREF="cases.html">Cases</A>
+<!--End of Navigation Panel-->
+<ADDRESS>
+athrun
+2013-03-31
+</ADDRESS>
+</BODY>
+</HTML>

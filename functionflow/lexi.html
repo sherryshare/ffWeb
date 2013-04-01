@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>C Lexical Analysis</TITLE>
+<META NAME="description" CONTENT="C Lexical Analysis">
+<META NAME="keywords" CONTENT="Function Flow">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="previous" HREF="dedup.html">
+<LINK REL="up" HREF="cases.html">
+</HEAD>
+
+<BODY class=MsoNormalTable border=0 cellpadding=0 style='mso-cellspacing:1.5pt;background:#CCECFF;mso-padding-alt:0cm 5.4pt 0cm 5.4pt'>
+<BR><BR>
+<H1><A NAME="SECTION00042000000000000000">
+C Lexical Analysis</A>
+</H1><HR>
+<P>
+Lexical analysis is the initial phase of compilation in which a stream of characters is converted into a stream of tokens. As the characters are read in one by one, 
+a finite state machine (FSM) is traversed. An FSM is a directed graph of states as nodes and transitions between states as edges. Each transition <TT>x</TT> 
+→<TT>y</TT> is labelled with the character that causes the state to change from <TT>x</TT> to <TT>y</TT>. The traversal starts at an initial state and ends in one of many final states, each of which emits a token, whereupon it resets to the initial state. Although the current state is always needed to calculate the next state, an unavoidable data dependence, we can use speculative parallelism to calculate the next-but-one state, by taking possible successive states as inputs. However, this approach causes uneven loads, so we await only the fastest state. The following code implements this idea and cooresponding SDG is shown in Fig.&nbsp;<A HREF="#fig-lexi">4</A>.
+</P>
+
+
+<DIV ALIGN="CENTER"><A NAME="fig-lexi"></A><A NAME="519"></A>
+<TABLE><TR>
+<TD><TABLE  WIDTH="50%" >
+vector&lt;String&gt; vs = inferrStates(prefix);<BR>
+vector&lt;<B><FONT COLOR=#0000FF>para</FONT></B>&gt; p(vs.size());<BR>
+Ast *fast = NULL,*tast,*rast;<BR>
+for(int i=0; i < vs.size(); i++)<BR>
+{<BR>
+&nbsp;&nbsp;p[i] buildSubAst(vs[i], fast);<BR>
+}<BR>
+<B><FONT COLOR=#0000FF>para</FONT></B> b, c, d;<BR>
+String token= b parseNextToken(prefix);<BR>
+c<B>&lt;b&gt;</B> buildSubAst(token, tast);<BR>
+d<B>&lt;any(p) || c&gt;</B><BR>
+&nbsp;&nbsp;checkSemantics(fast, tast, rast);<BR><BR>
+bool is_spec_right =<BR>
+&nbsp;&nbsp;e<B>&lt;c && d&gt;</B> verifySpec(rast, tast);<BR>
+if(!is_spec_right)<BR>
+&nbsp;&nbsp;checkSemantics(NULL, tast, rast);
+</TABLE></TD>
+<TD><TABLE  WIDTH="50%" ALIGN="CENTER" >
+<IMG ALIGN="CENTER" WIDTH=400
+ BORDER="0" SRC="pic/lexi.png">
+ <CAPTION STYLE="white-space:nowrap;display:inline-block"><STRONG>Figure 4:</STRONG>
+SDG of C Lexical analyzer.</CAPTION>
+</TABLE></TD>
+</TR></TABLE>
+</DIV>
+
+<DIV ALIGN="CENTER"></DIV></TD></TR>
+</TABLE>
+</TD></TR>
+</TABLE>
+</DIV>
+
+<P>Our analyser reports opportunities for code motion and task fusion.
+As task <TT>c</TT>'s termination will trigger more task's, emitting <TT>c</TT> firstly is better.
+So we can foward code of creating task <TT>b</TT> and <TT>c</TT>. 
+Besides, <TT>b</TT> is only dependent by <TT>c</TT>, task <TT>b</TT> and <TT>c</TT> can be fused as one task.
+The following is our optimised code.</P>
+
+void fusion_b_c(String pre, Ast *t)<BR>
+{<BR>
+&nbsp;&nbsp;String token= parseNextToken(pre);<BR>
+&nbsp;&nbsp;buildSubAst(token, t);<BR>
+}<BR>
+...<BR>
+<B><FONT COLOR=#0000FF>para</FONT></B> w;<BR>
+Ast *fast = NULL,*tast,*rast;<BR>
+w fusion_b_c(prefix, tast);<BR><BR>
+vector&lt;String&gt; vs = inferrStates(prefix);<BR>
+vector&lt;<B><FONT COLOR=#0000FF>para</FONT></B>&gt; p(vs.size());<BR><BR>
+for(int i=0; i < vs.size(); i++)<BR>
+{<BR>
+&nbsp;&nbsp;p[i] buildSubAst(vs[i], fast);<BR>
+}<BR>
+<B><FONT COLOR=#0000FF>para</FONT></B> d;<BR>
+d<B>&lt;any(p) || w&gt;</B><BR>
+&nbsp;&nbsp;checkSemantics(fast, tast, rast);<BR><BR>
+bool is_spec_right =<BR>
+&nbsp;&nbsp;e<B>&lt;w && d&gt;</B> verifySpec(rast, tast);<BR>
+if(!is_spec_right)<BR>
+&nbsp;&nbsp;checkSemantics(NULL, tast, rast);
+
+<P>Typically, this kind of applications can be abstracted as a problem in which transitting from current state to the next states needs heavy computation cost.
+Speculative parallelization is used to bypass the heavy computation and take possible successive states as inputs. 
+Unfortunally, taking various successive states as inputs cause various load.
+Thus, we take several successive states as inputs parallel and only wait the fastest one.</P>
+
+<HR>
+<!--Navigation Panel-->
+<B> Up:</B> <A NAME="tex2html75"
+  HREF="cases.html">Cases</A>
+<B> Previous:</B> <A NAME="tex2html71"
+  HREF="dedup.html">Dedup in PARSEC</A>
+<!--End of Navigation Panel-->
+<ADDRESS>
+athrun
+2013-03-31
+</ADDRESS>
+</BODY>
+</HTML>

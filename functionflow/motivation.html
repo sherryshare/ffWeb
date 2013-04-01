@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Motivation of Function Flow?</TITLE>
+<META NAME="description" CONTENT="Motivation of Function Flow?">
+<META NAME="keywords" CONTENT="Function Flow">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+
+<LINK REL="next" HREF="language.html">
+<LINK REL="previous" HREF="../FunctionFlow.htm">
+<LINK REL="up" HREF="../FunctionFlow.htm">
+<LINK REL="next" HREF="language.html">
+</HEAD>
+
+<BODY class=MsoNormalTable border=0 cellpadding=0 style='mso-cellspacing:1.5pt;background:#CCECFF;mso-padding-alt:0cm 5.4pt 0cm 5.4pt'>
+<BR><BR>
+<H1><A NAME="SECTION00010000000000000000">
+Motivation of <TT> Function Flow</TT>?</A>
+</H1>
+<HR>
+<p>
+As we claimed, our target of <TT> Function Flow</TT> is to exploit compilers' abilities of improving productivness in parallel programming.
+Then what are the main aspects of productivness decreasing in parallel programming? 
+In <TT> Function Flow</TT>, we class them with the following orthogonal aspects and try to fill the gap.
+
+<UL>
+<LI>Difficult to express parallelism. 
+ Expressing parallelism is not only about how to parallelize specific code, but also about parallel tasks' orders, or dependences.
+ We find that they, parallelization and coordinating parallelism, are so close that decoupling them is anti-intuitive.
+ In <TT> Function Flow</TT>, one can coordinate parallel tasks at the time creating them without any modification of existed business logic code.
+</LI>
+<LI>Difficult to debug. There are many kinds of concurrency bugs in parallel applications, such as deadlock, data race, etc.
+ But one of the most important reason of debugging is concurrency bugs are hard to reproduce. 
+ <TT> Function Flow</TT> tries to report possible bugs at compile time, but not runtime. 
+ <TT> Function Flow</TT> achieves this by analyze static dependency graph (SDG) extracted from <TT> Function Flow</TT> language. 
+ As SDG contains orders of parallel tasks, it's possible to identify possible bugs more precisely in <TT> Function Flow</TT>.
+</LI>
+<LI>Difficult to optimize. 
+ Until now, researchers are still trying to identify factors which affect parallel programs performance, such as cache miss rate, sharing cache, fasle sharing, scheduling in operating system, conflicts on locks or shared data structure, and etc.
+ It's even harder to leverage corresponding optimization opportunites than identifying them. 
+ <TT> Function Flow</TT> exploits several optimizing techniques and more ideas are waiting for our exploration.
+</LI>
+</UL>
+</P>
+<BR><HR>
+<!--Navigation Panel-->
+<B> Next:</B> <A NAME="tex2html27"
+  HREF="language.html">Function Flow Language</A>
+<B> Up:</B> <A NAME="tex2html25"
+  HREF="../FunctionFlow.htm">Function Flow Project</A>
+<B> Previous:</B> <A NAME="tex2html19"
+  HREF="../FunctionFlow.htm">Function Flow Project</A>
+<!--End of Navigation Panel-->
+<ADDRESS>
+athrun
+2013-03-31
+</ADDRESS>
+</BODY>
+</HTML>

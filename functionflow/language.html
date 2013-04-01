@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Function Flow Language</TITLE>
+<META NAME="description" CONTENT="Function Flow Language">
+<META NAME="keywords" CONTENT="Function Flow">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+
+<LINK REL="next" HREF="sdg.html">
+<LINK REL="previous" HREF="motivation.html">
+<LINK REL="up" HREF="../FunctionFlow.htm">
+<LINK REL="next" HREF="sdg.html">
+</HEAD>
+
+<BODY class=MsoNormalTable border=0 cellpadding=0 style='mso-cellspacing:1.5pt;background:#CCECFF;mso-padding-alt:0cm 5.4pt 0cm 5.4pt'>
+<BR><BR>
+<H1><A NAME="SECTION00020000000000000000">
+Function Flow Language</A>
+</H1>
+<HR>
+<P>
+Techniqually, <TT> Function Flow</TT> can be integrated with C/C++, Java, C#, and etc. 
+Currently, we have integrated it with C, and C++ is still under heavy development.
+</P>
+<P>
+In <TT> Function Flow</TT>, a basic parallel units is a function. Functions are declared to be 
+parallel tasks by using a named higher-order functor <TT>para</TT>. 
+Then a task
+is spawned with a condition that acts as its execution prerequisite.
+As it denotes the termination of other tasks, it can express task dependency without decreasing parallelism. 
+</P>
+
+
+<DIV ALIGN="CENTER"><A NAME="fig-ff-exam"></A><A NAME="223"></A>
+<TABLE>
+<TR><TD>
+<B><FONT COLOR=#0000FF>spawn</FONT></B>{<BR>
+&nbsp;&nbsp;<B><FONT COLOR=#0000FF>para</FONT></B> b, c, d, e, f;<BR>
+&nbsp;&nbsp;for(...)<BR>
+&nbsp;&nbsp;<B><FONT COLOR=#0000FF>para</FONT></B> A();<BR>
+&nbsp;&nbsp;b B();<BR>
+&nbsp;&nbsp;c C();<BR>
+&nbsp;&nbsp;e<B>&lt;b && c&gt;</B> E();<BR>
+}<B><FONT COLOR=#0000FF>end</FONT></B>(<B>any(anony) || b</B>){<BR>
+&nbsp;&nbsp;d D();<BR>
+&nbsp;&nbsp;f<B>&lt;d && e&gt;</B> F();<BR>
+}<BR>
+</TD></TR>
+<CAPTION STYLE="white-space:nowrap;display:inline-block"><STRONG>Figure 1:</STRONG>
+An implementation from <TT>Function Flow</TT>.</CAPTION>
+</TABLE>
+</DIV>
+
+<P>
+As an illustration, here is a example in Fig.&nbsp;<A HREF="#fig-ff-exam">1</A>. Here, <TT>para</TT> is a higher-order functor and is
+used to create a new task either using a named functor as with <TT>b</TT>, to 
+call function <TT>B</TT>, or an anonymous functor, such as that used to call <TT>A</TT>.
+If a functor is named, then the task created by it can be referred to 
+by the name of the functor. Each <TT>para</TT> functor has two parameters. The
+first parameter, between angle brackets <TT>&lt;...&gt;</TT>, is the pre-requisite for 
+executing the task, in terms of the terminations of other tasks. 
+We call this a functional wait. The second parameter is the procedure to be 
+parallelised. So a <TT>para</TT> functor spawns the specified task by calling 
+the specified procedure.
+
+</P>
+<B>More details here!</B>
+
+
+<HR>
+<!--Navigation Panel-->
+<B> Next:</B> <A NAME="tex2html37"
+  HREF="sdg.html">Static Dependency Graph (SDG)</A>
+<B> Up:</B> <A NAME="tex2html35"
+  HREF="../FunctionFlow.htm">Function Flow Project</A>
+<B> Previous:</B> <A NAME="tex2html29"
+  HREF="motivation.html">Motivation of Function Flow?</A>
+<!--End of Navigation Panel-->
+<ADDRESS>
+athrun
+2013-03-31
+</ADDRESS>
+</BODY>
+</HTML>

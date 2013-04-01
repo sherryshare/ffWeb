@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Static Dependency Graph (SDG)</TITLE>
+<META NAME="description" CONTENT="Static Dependency Graph (SDG)">
+<META NAME="keywords" CONTENT="Function Flow">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+
+<LINK REL="next" HREF="cases.html">
+<LINK REL="previous" HREF="language.html">
+<LINK REL="up" HREF="../FunctionFlow.htm">
+<LINK REL="next" HREF="cases.html">
+</HEAD>
+<BODY class=MsoNormalTable border=0 cellpadding=0 style='mso-cellspacing:1.5pt;background:#CCECFF;mso-padding-alt:0cm 5.4pt 0cm 5.4pt'>
+
+<BR><BR>
+<H1><A NAME="SECTION00030000000000000000">
+Static Dependency Graph (SDG)</A>
+</H1>
+<HR>
+<P>
+The static dependency graph enables us to infer execution sequences at compile time and thereby detect concurrency bugs and potential optimisations. 
+It is built with the following steps:
+
+<UL>
+<LI>building SSA (Static Single Assignment) for <TT>para</TT> and <TT>cond</TT> variables via the following definition, this step generates representation &alpha;;
+<DIV><B>Definition  1</B> &nbsp; 
+<I>If <TT>a</TT> waits for <TT>b</TT>, then <TT>a</TT> is defined by <TT>b</TT> while <TT>b</TT> is used by <TT>a</TT>.
+<A NAME="def-dep"></A> </I></DIV>
+
+</LI>
+<LI>building data dependences and control flow dependences for <TT>para</TT> tasks on representation 
+&alpha;, named &beta;;
+</LI>
+<LI>building call graph, CG, for methods which take <TT>para</TT> or <TT>cond</TT> as parameters, or take <TT>para</TT> or <TT>cond</TT> as return values;
+</LI>
+<LI>connecting call graph CG
+ and dependences graph &beta;
+, this step generates <B>SDG</B>. 
+</LI>
+</UL>
+
+</P>
+<P>
+<TT> Function Flow</TT> can precisely build SDG. This is largely because static analysis in <TT> Function Flow</TT> is simpler than in traditional program analysis.
+Fistly, <TT>cond</TT> and <TT>para</TT> variables are declared and used with the original type in <TT> Function Flow</TT>. 
+And reference or pointers to <TT>cond</TT> and <TT>para</TT>, are not allowed in <TT> Function Flow</TT>. 
+Secondly, variables other than <TT>para</TT> and <TT>cond</TT> are not considered.
+The only exception is if a control flow can reach a <TT>para</TT> or <TT>cond</TT> variables' definition, 
+the control flow shall be analyzed to check if it depends on some <TT>para</TT> task's return value.
+Such as the following example shows.
+</P>
+&nbsp;&nbsp;bool flag = <B><FONT COLOR=#0000FF>para</FONT></B> DoSomething(...);<BR>
+&nbsp;&nbsp;if(flag)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B><FONT COLOR=#0000FF>para</FONT></B> DoAnother(...);
+<P>
+Here, the <TT>flag</TT> shall be checked to see if it depends on a <TT>para</TT> task.
+Thirdly, call graph only contains functions with <TT>para</TT> or <TT>cond</TT> either as parameters or return values. 
+These largely reduces the complexity of intra-procedure analysis in <TT> Function Flow</TT> and makes it affordable.
+Here is an example of SDG.
+</P>
+<DIV ALIGN="CENTER"><A NAME="fig-exam-ud"></A><A NAME="232"></A>
+<TABLE>
+<TR><TD><TABLE  ALIGN="CENTER" WIDTH="50%">
+<B><FONT COLOR=#0000FF>para</FONT></B> Do(<B><FONT COLOR=#0000FF>cond</FONT></B> v){<BR>
+&nbsp;&nbsp;<B><FONT COLOR=#0000FF>para</FONT></B> a;<BR>
+&nbsp;&nbsp;block = a&lt;v&gt; ReadData();<BR>
+&nbsp;&nbsp;foreach(num in block)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;<B><FONT COLOR=#0000FF>para</FONT></B>&lt;a&gt; DPSC(num);<BR>
+&nbsp;&nbsp;return a;<BR>
+}<BR><BR>
+<B><FONT COLOR=#0000FF>spawn</FONT></B>{<BR>
+&nbsp;&nbsp;<B><FONT COLOR=#0000FF>cond</FONT></B> v = <B><FONT COLOR=#0000FF>ctrue</FONT></B>;<BR>
+&nbsp;&nbsp;while(file_is_not_end){<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;v = Do(v);<BR>
+}}<B><FONT COLOR=#0000FF>end</FONT></B>(){<BR>
+&nbsp;&nbsp;GetMiddleRangeAndIndex(array);<BR>
+}<BR>
+</TABLE></TD>
+<TD><TABLE ALIGN="CENTER" WIDTH=50%>
+<IMG BORDER=0 SRC="pic/sdg.png" WIDTH=400>
+</TABLE></TD></TR>
+</TABLE>
+<TABLE ALIGN="CENTER"><CAPTION STYLE="white-space:nowrap;display:inline-block"><STRONG>Figure 2:</STRONG>
+A Static Dependency Graph of <TT>Function Flow</TT></CAPTION></TABLE>
+</DIV>
+<HR>
+<!--Navigation Panel-->
+<B> Next:</B> <A NAME="tex2html47"
+  HREF="cases.html">Cases</A>
+<B> Up:</B> <A NAME="tex2html45"
+  HREF="../FunctionFlow.htm">Function Flow Project</A>
+<B> Previous:</B> <A NAME="tex2html39"
+  HREF="language.html">Function Flow Language</A>
+<!--End of Navigation Panel-->
+<ADDRESS>
+athrun
+2013-03-31
+</ADDRESS>
+</BODY>
+</HTML>
